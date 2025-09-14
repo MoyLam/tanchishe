@@ -11,9 +11,18 @@ class SnakeGame {
         this.gridSize = 20;
         this.tileCount = this.canvas.width / this.gridSize;
         
+        // 设备检测和触摸控制相关属性
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.minSwipeDistance = 30; // 最小滑动距离
+        
         this.reset();
         this.bindEvents();
         this.loadHighScore();
+        
+        // 根据设备类型显示不同的提示
+        this.updateInstructions();
     }
     
     reset() {
@@ -42,9 +51,21 @@ class SnakeGame {
         return newFood;
     }
     
+    updateInstructions() {
+        const instructionsElement = document.querySelector('.instructions p:first-child');
+        if (instructionsElement) {
+            if (this.isMobile) {
+                instructionsElement.textContent = '在屏幕上滑动手指控制蛇的移动方向';
+            } else {
+                instructionsElement.textContent = '使用方向键或WASD控制蛇的移动';
+            }
+        }
+    }
+    
     bindEvents() {
+        // 键盘控制（电脑端）
         document.addEventListener('keydown', (e) => {
-            if (!this.gameRunning || this.gamePaused) return;
+            if (!this.gameRunning || this.gamePaused || this.isMobile) return;
             
             switch(e.key) {
                 case 'ArrowUp':
@@ -82,6 +103,61 @@ class SnakeGame {
             }
         });
         
+        // 触摸控制（移动端）
+        if (this.isMobile) {
+            this.canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                this.touchStartX = touch.clientX;
+                this.touchStartY = touch.clientY;
+            }, { passive: false });
+            
+            this.canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+            
+            this.canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (!this.gameRunning || this.gamePaused) return;
+                
+                const touch = e.changedTouches[0];
+                const touchEndX = touch.clientX;
+                const touchEndY = touch.clientY;
+                
+                const deltaX = touchEndX - this.touchStartX;
+                const deltaY = touchEndY - this.touchStartY;
+                
+                // 计算滑动距离
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                if (distance < this.minSwipeDistance) return;
+                
+                // 确定滑动方向
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    // 水平滑动
+                    if (deltaX > 0 && this.dx !== -1) {
+                        // 向右滑动
+                        this.dx = 1;
+                        this.dy = 0;
+                    } else if (deltaX < 0 && this.dx !== 1) {
+                        // 向左滑动
+                        this.dx = -1;
+                        this.dy = 0;
+                    }
+                } else {
+                    // 垂直滑动
+                    if (deltaY > 0 && this.dy !== -1) {
+                        // 向下滑动
+                        this.dx = 0;
+                        this.dy = 1;
+                    } else if (deltaY < 0 && this.dy !== 1) {
+                        // 向上滑动
+                        this.dx = 0;
+                        this.dy = -1;
+                    }
+                }
+            }, { passive: false });
+        }
+        
         this.startBtn.addEventListener('click', () => this.start());
         this.pauseBtn.addEventListener('click', () => this.togglePause());
         this.resetBtn.addEventListener('click', () => this.reset());
@@ -90,10 +166,15 @@ class SnakeGame {
     start() {
         if (this.gameRunning) return;
         
+        // 游戏结束后可以直接点击开始游戏重新开始
+        // 重置游戏状态，但保留最高分
+        this.reset();
+        
         this.gameRunning = true;
         this.gamePaused = false;
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
+        
         this.gameLoop();
     }
     
@@ -179,7 +260,8 @@ class SnakeGame {
             this.ctx.fillStyle = 'white';
             this.ctx.font = '20px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('按开始游戏按钮开始', this.canvas.width / 2, this.canvas.height / 2);
+            const instructionText = this.isMobile ? '点击开始游戏按钮开始' : '按开始游戏按钮开始';
+            this.ctx.fillText(instructionText, this.canvas.width / 2, this.canvas.height / 2);
         }
     }
     
