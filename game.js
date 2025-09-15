@@ -44,6 +44,12 @@ class SnakeGame {
         this.score = 0;
         this.gameRunning = false;
         this.gamePaused = false;
+        
+        // 重置按钮状态
+        this.startBtn.disabled = false;
+        this.pauseBtn.disabled = true;
+        this.pauseBtn.textContent = '暂停';
+        
         this.updateScore();
         this.draw();
     }
