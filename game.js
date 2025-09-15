@@ -11,27 +11,9 @@ class SnakeGame {
         this.gridSize = 20;
         this.tileCount = this.canvas.width / this.gridSize;
         
-        // 设备检测和触摸控制相关属性
-        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        this.touchStartX = 0;
-        this.touchStartY = 0;
-        this.minSwipeDistance = 30; // 最小滑动距离
-        
-        // 调试日志函数
-        this.addLog = (message) => {
-            if (this.isMobile) {
-                console.log('[SnakeGame] ' + message);
-            }
-        };
-        
         this.reset();
         this.bindEvents();
         this.loadHighScore();
-        
-        // 根据设备类型显示不同的提示
-        this.updateInstructions();
-        
-        this.addLog('游戏初始化完成，设备类型: ' + (this.isMobile ? '移动端' : '电脑端'));
     }
     
     reset() {
@@ -66,21 +48,10 @@ class SnakeGame {
         return newFood;
     }
     
-    updateInstructions() {
-        const instructionsElement = document.querySelector('.instructions p:first-child');
-        if (instructionsElement) {
-            if (this.isMobile) {
-                instructionsElement.textContent = '在屏幕上滑动手指控制蛇的移动方向';
-            } else {
-                instructionsElement.textContent = '使用方向键或WASD控制蛇的移动';
-            }
-        }
-    }
-    
     bindEvents() {
         // 键盘控制（电脑端）
         document.addEventListener('keydown', (e) => {
-            if (!this.gameRunning || this.gamePaused || this.isMobile) return;
+            if (!this.gameRunning || this.gamePaused) return;
             
             switch(e.key) {
                 case 'ArrowUp':
@@ -118,142 +89,18 @@ class SnakeGame {
             }
         });
         
-        // 触摸控制（移动端和鼠标模拟）
-        this.setupTouchAndMouseControls();
-        
         this.startBtn.addEventListener('click', () => this.start());
         this.pauseBtn.addEventListener('click', () => this.togglePause());
         this.resetBtn.addEventListener('click', () => this.reset());
+        
+        // 虚拟方向键事件
+        document.getElementById('upBtn').addEventListener('click', () => this.handleVirtualControl('up'));
+        document.getElementById('downBtn').addEventListener('click', () => this.handleVirtualControl('down'));
+        document.getElementById('leftBtn').addEventListener('click', () => this.handleVirtualControl('left'));
+        document.getElementById('rightBtn').addEventListener('click', () => this.handleVirtualControl('right'));
     }
     
-    setupTouchAndMouseControls() {
-        // 确保canvas支持触摸和鼠标
-        this.canvas.style.touchAction = 'none';
-        this.canvas.style.cursor = 'grab';
-        
-        let isMouseDown = false;
-        let mouseStartX = 0;
-        let mouseStartY = 0;
-        
-        // 触摸事件处理
-        if (this.isMobile) {
-            this.canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                this.touchStartX = touch.clientX;
-                this.touchStartY = touch.clientY;
-                this.addLog('触摸开始: ' + this.touchStartX + ', ' + this.touchStartY);
-            }, { passive: false });
-            
-            this.canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-            }, { passive: false });
-            
-            this.canvas.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleSwipe(e.changedTouches[0]);
-            }, { passive: false });
-            
-            this.addLog('移动端触摸控制已启用');
-        }
-        
-        // 鼠标事件处理（电脑端模拟触摸）
-        this.canvas.addEventListener('mousedown', (e) => {
-            isMouseDown = true;
-            const rect = this.canvas.getBoundingClientRect();
-            mouseStartX = e.clientX - rect.left;
-            mouseStartY = e.clientY - rect.top;
-            this.canvas.style.cursor = 'grabbing';
-        });
-        
-        this.canvas.addEventListener('mousemove', (e) => {
-            if (!isMouseDown) return;
-            e.preventDefault();
-        });
-        
-        this.canvas.addEventListener('mouseup', (e) => {
-            if (!isMouseDown) return;
-            isMouseDown = false;
-            
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseEndX = e.clientX - rect.left;
-            const mouseEndY = e.clientY - rect.top;
-            
-            const touch = {
-                clientX: mouseEndX,
-                clientY: mouseEndY
-            };
-            
-            // 计算相对于起始位置的滑动
-            const fakeTouch = {
-                clientX: mouseStartX + (mouseEndX - mouseStartX),
-                clientY: mouseStartY + (mouseEndY - mouseStartY)
-            };
-            
-            this.handleSwipe(fakeTouch, mouseStartX, mouseStartY);
-            this.canvas.style.cursor = 'grab';
-        });
-        
-        this.canvas.addEventListener('mouseleave', () => {
-            isMouseDown = false;
-            this.canvas.style.cursor = 'grab';
-        });
-        
-        if (!this.isMobile) {
-            this.addLog('电脑端鼠标模拟触摸已启用');
-        }
-    }
-    
-    handleSwipe(touch, startX = this.touchStartX, startY = this.touchStartY) {
-        const touchEndX = touch.clientX;
-        const touchEndY = touch.clientY;
-        
-        const deltaX = touchEndX - startX;
-        const deltaY = touchEndY - startY;
-        
-        this.addLog(`滑动: (${deltaX}, ${deltaY})`);
-        
-        // 计算滑动距离
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        if (distance < this.minSwipeDistance) {
-            this.addLog('滑动距离太小: ' + distance);
-            return;
-        }
-        
-        if (!this.gameRunning || this.gamePaused) {
-            this.addLog('游戏未运行或已暂停');
-            return;
-        }
-        
-        // 确定滑动方向
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // 水平滑动
-            if (deltaX > 0 && this.dx !== -1) {
-                // 向右滑动
-                this.dx = 1;
-                this.dy = 0;
-                this.addLog('向右移动');
-            } else if (deltaX < 0 && this.dx !== 1) {
-                // 向左滑动
-                this.dx = -1;
-                this.dy = 0;
-                this.addLog('向左移动');
-            }
-        } else {
-            // 垂直滑动
-            if (deltaY > 0 && this.dy !== -1) {
-                // 向下滑动
-                this.dx = 0;
-                this.dy = 1;
-                this.addLog('向下移动');
-            } else if (deltaY < 0 && this.dy !== 1) {
-                // 向上滑动
-                this.dx = 0;
-                this.dy = -1;
-                this.addLog('向上移动');
-            }
-        }
-    }
+
     
     start() {
         if (this.gameRunning) return;
@@ -352,8 +199,7 @@ class SnakeGame {
             this.ctx.fillStyle = 'white';
             this.ctx.font = '20px Arial';
             this.ctx.textAlign = 'center';
-            const instructionText = this.isMobile ? '点击开始游戏按钮开始' : '按开始游戏按钮开始';
-            this.ctx.fillText(instructionText, this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.fillText('按开始游戏按钮开始', this.canvas.width / 2, this.canvas.height / 2);
         }
     }
     
@@ -373,6 +219,37 @@ class SnakeGame {
     loadHighScore() {
         this.highScore = parseInt(localStorage.getItem('snakeHighScore')) || 0;
         this.highScoreElement.textContent = this.highScore;
+    }
+    
+    handleVirtualControl(direction) {
+        if (!this.gameRunning || this.gamePaused) return;
+        
+        switch(direction) {
+            case 'up':
+                if (this.dy !== 1) {
+                    this.dx = 0;
+                    this.dy = -1;
+                }
+                break;
+            case 'down':
+                if (this.dy !== -1) {
+                    this.dx = 0;
+                    this.dy = 1;
+                }
+                break;
+            case 'left':
+                if (this.dx !== 1) {
+                    this.dx = -1;
+                    this.dy = 0;
+                }
+                break;
+            case 'right':
+                if (this.dx !== -1) {
+                    this.dx = 1;
+                    this.dy = 0;
+                }
+                break;
+        }
     }
     
     gameOver() {
