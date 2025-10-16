@@ -180,11 +180,12 @@ class AuthUI {
 
     async handleRegister() {
         const username = document.getElementById('register-username')?.value?.trim();
+        const email = document.getElementById('register-email')?.value?.trim();
         const password = document.getElementById('register-password')?.value;
         const confirmPassword = document.getElementById('register-password-confirm')?.value;
 
         // 表单验证
-        if (!username || !password || !confirmPassword) {
+        if (!username || !email || !password || !confirmPassword) {
             this.showMessage('请填写所有字段', 'error');
             return;
         }
@@ -211,6 +212,12 @@ class AuthUI {
             return;
         }
 
+        // 验证邮箱格式
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            this.showMessage('请输入有效的邮箱地址', 'error');
+            return;
+        }
+
         // 显示加载状态
         const registerBtn = document.getElementById('register-btn');
         const originalText = registerBtn?.textContent;
@@ -226,7 +233,7 @@ class AuthUI {
                 return;
             }
 
-            const result = await authManager.register(username, password);
+            const result = await authManager.register(email, password, username);
             
             if (result.success) {
                 this.showMessage(result.message, 'success');

@@ -298,22 +298,21 @@ class SnakeGame {
             return;
         }
         
+        // 显示积分奖励动画
+        if (gameScore > 0) {
+            this.showPointsReward(gameScore);
+        }
+
         try {
             // 获取当前用户积分
             const currentPoints = authManager.getCurrentPoints();
             // 累计新积分（1游戏分数 = 1积分）
             const newTotalPoints = currentPoints + gameScore;
             
-            // 更新用户积分
+            // 更新用户积分（这个方法内部会自动更新界面显示）
             await authManager.updateUserPoints(newTotalPoints);
             
-            // 更新界面显示
-            authManager.updatePointsDisplay();
-            
-            // 显示积分奖励动画
-            if (gameScore > 0) {
-                this.showPointsReward(gameScore);
-            }
+            console.log(`游戏结束，获得 ${gameScore} 积分，总积分: ${newTotalPoints}`);
         } catch (error) {
             console.error('累计积分失败:', error);
         }
