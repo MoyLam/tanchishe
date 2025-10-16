@@ -177,3 +177,253 @@ button:disabled {
         font-size: 1.2rem;
     }
 }
+
+/* 认证界面样式 */
+.auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    min-height: 100vh;
+}
+
+.auth-box {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    margin: auto;
+}
+
+.auth-box h1 {
+    color: white;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.auth-form h2 {
+    color: white;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.auth-form input {
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 50px;
+}
+
+.auth-form input:focus {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+.auth-btn {
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.auth-btn:hover {
+    background: linear-gradient(45deg, #2980b9, #1f5f8b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.auth-btn:active {
+    transform: translateY(0);
+}
+
+.auth-btn:disabled {
+    background: #7f8c8d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.auth-switch {
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+
+.auth-switch a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.auth-switch a:hover {
+    color: #2980b9;
+}
+
+.register-bonus {
+    color: #f39c12;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.auth-message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    display: none;
+}
+
+.auth-message.success {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.auth-message.error {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.auth-message.info {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+/* 用户信息栏样式 */
+.user-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-welcome {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.user-points {
+    color: #f39c12;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.logout-btn {
+    padding: 8px 16px;
+    background: rgba(231, 76, 60, 0.8);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(231, 76, 60, 1);
+    transform: translateY(-1px);
+}
+
+/* 积分奖励动画 */
+.points-reward {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(45deg, #f39c12, #e67e22);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    box-shadow: 0 4px 20px rgba(243, 156, 18, 0.4);
+    z-index: 2000;
+    animation: pointsReward 2s ease-out;
+}
+
+@keyframes pointsReward {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+    .auth-box {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+    
+    .auth-box h1 {
+        font-size: 2rem;
+    }
+    
+    .auth-form h2 {
+        font-size: 1.5rem;
+    }
+    
+    .user-info {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .user-welcome, .user-points {
+        font-size: 1rem;
+    }
+}

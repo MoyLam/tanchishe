@@ -35,3 +35,20 @@ Thumbs.db
 # 缓存
 .cache/
 *.cache
+
+# 敏感配置文件 - 防止Supabase密钥泄露
+supabase-config.js
+config.js
+.env
+.env.local
+.env.production
+.env.development
+
+# 备份文件
+*.bak
+*.backup
+*~
+
+# 用户特定配置
+user-config.js
+local-config.js

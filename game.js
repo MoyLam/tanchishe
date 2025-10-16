@@ -217,8 +217,20 @@ class SnakeGame {
     }
     
     loadHighScore() {
-        this.highScore = parseInt(localStorage.getItem('snakeHighScore')) || 0;
-        this.highScoreElement.textContent = this.highScore;
+        // 如果用户已登录，优先从用户档案加载最高分
+        if (typeof authManager !== 'undefined' && authManager && authManager.getCurrentUser()) {
+            const userHighScore = authManager.userHighScore;
+            if (userHighScore !== undefined && userHighScore !== null) {
+                this.highScore = userHighScore;
+                return;
+            }
+        }
+        
+        // 否则从本地存储加载
+        const savedHighScore = localStorage.getItem('snakeHighScore');
+        if (savedHighScore) {
+            this.highScore = parseInt(savedHighScore);
+        }
     }
     
     handleVirtualControl(direction) {
@@ -254,21 +266,91 @@ class SnakeGame {
     
     gameOver() {
         this.gameRunning = false;
+        
+        // 更新最高分
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            this.saveHighScore();
+            
+            // 如果用户已登录，更新数据库中的最高分
+            if (typeof authManager !== 'undefined' && authManager && authManager.getCurrentUser()) {
+                authManager.updateHighScore(this.highScore);
+            }
+        }
+        
+        // 如果用户已登录，累计游戏得分到总积分（1分=1积分）
+        if (typeof authManager !== 'undefined' && authManager && authManager.getCurrentUser()) {
+            this.addPointsToUser(this.score);
+        }
+        
+        // 重置按钮状态
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
         this.pauseBtn.textContent = '暂停';
         
+        // 显示游戏结束信息
+        this.showGameOverMessage();
+    }
+    
+    // 将游戏得分累计到用户总积分
+    async addPointsToUser(gameScore) {
+        if (!authManager || !authManager.getCurrentUser()) {
+            return;
+        }
+        
+        try {
+            // 获取当前用户积分
+            const currentPoints = authManager.getCurrentPoints();
+            // 累计新积分（1游戏分数 = 1积分）
+            const newTotalPoints = currentPoints + gameScore;
+            
+            // 更新用户积分
+            await authManager.updateUserPoints(newTotalPoints);
+            
+            // 更新界面显示
+            authManager.updatePointsDisplay();
+            
+            // 显示积分奖励动画
+            if (gameScore > 0) {
+                this.showPointsReward(gameScore);
+            }
+        } catch (error) {
+            console.error('累计积分失败:', error);
+        }
+    }
+    
+    // 显示积分奖励动画
+    showPointsReward(points) {
+        const rewardElement = document.createElement('div');
+        rewardElement.className = 'points-reward';
+        rewardElement.textContent = `+${points} 积分！`;
+        document.body.appendChild(rewardElement);
+        
+        // 2秒后移除元素
+        setTimeout(() => {
+            if (rewardElement.parentNode) {
+                rewardElement.parentNode.removeChild(rewardElement);
+            }
+        }, 2000);
+    }
+    
+    // 显示游戏结束信息
+    showGameOverMessage() {
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        this.ctx.fillStyle = '#e74c3c';
-        this.ctx.font = 'bold 30px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('游戏结束!', this.canvas.width / 2, this.canvas.height / 2 - 20);
-        
         this.ctx.fillStyle = 'white';
-        this.ctx.font = '20px Arial';
-        this.ctx.fillText(`最终得分: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
+        this.ctx.font = 'bold 24px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('游戏结束!', this.canvas.width / 2, this.canvas.height / 2 - 40);
+        
+        this.ctx.font = '18px Arial';
+        this.ctx.fillText(`本局得分: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 - 10);
+        this.ctx.fillText(`最高分: ${this.highScore}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
+        
+        if (typeof authManager !== 'undefined' && authManager && authManager.getCurrentUser()) {
+            this.ctx.fillText(`获得积分: +${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 50);
+        }
     }
 }
 
