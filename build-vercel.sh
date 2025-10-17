@@ -50,31 +50,23 @@ fi
 # 生成真实配置
 echo "📝 使用环境变量生成 Supabase 配置..."
 
-cat > supabase-config.js << 'HEREDOC_END'
+cat > supabase-config.js << HEREDOC_END
 // Supabase 配置文件
 // 由 Vercel 构建时自动生成
-// 请勿手动编辑此文件
+// 生成时间: $(date)
 
-(function() {
-    'use strict';
-    
-    // 从环境变量注入的配置
-    const SUPABASE_URL = 'PLACEHOLDER_URL';
-    const SUPABASE_ANON_KEY = 'PLACEHOLDER_KEY';
-    const isConfigured = true;
+const SUPABASE_URL = '${SUPABASE_URL}';
+const SUPABASE_ANON_KEY = '${SUPABASE_ANON_KEY}';
+const isConfigured = true;
 
-    window.SUPABASE_URL = SUPABASE_URL;
-    window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
-    window.isConfigured = isConfigured;
+// 设置全局变量
+window.SUPABASE_URL = SUPABASE_URL;
+window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+window.isConfigured = isConfigured;
 
-    console.log('✅ Supabase 配置已加载');
-    console.log('📍 URL:', SUPABASE_URL);
-})();
+console.log('✅ Supabase 配置已加载（Vercel 构建）');
+console.log('📍 URL:', SUPABASE_URL);
 HEREDOC_END
-
-# 替换占位符
-sed -i "s|PLACEHOLDER_URL|${SUPABASE_URL}|g" supabase-config.js
-sed -i "s|PLACEHOLDER_KEY|${SUPABASE_ANON_KEY}|g" supabase-config.js
 
 echo "✅ Supabase 配置文件生成成功"
 echo ""
