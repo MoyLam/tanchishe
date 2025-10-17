@@ -76,11 +76,13 @@
     
     <!-- 引入Supabase配置和认证脚本 -->
     <script>
-// Supabase Config (injected by GitHub Actions)
-window.SUPABASE_URL='https://uiixvbwozggzqvftkifm.supabase.co';
-window.SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpaXh2YndvemdnenF2ZnRraWZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MTUwMjcsImV4cCI6MjA3NjE5MTAyN30.ZEpXiIPd0Js5ICpVcvYc8sxBgI0lYKmgdo2ho3ijz6U';
-window.isConfigured=true;
-</script>
+    // Supabase Config (injected by GitHub Actions)
+    window.SUPABASE_URL='https://uiixvbwozggzqvftkifm.supabase.co';
+    window.SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpaXh2YndvemdnenF2ZnRraWZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MTUwMjcsImV4cCI6MjA3NjE5MTAyN30.ZEpXiIPd0Js5ICpVcvYc8sxBgI0lYKmgdo2ho3ijz6U';
+    window.isConfigured=true;
+    console.log('✓ Supabase 配置已注入');
+    </script>
+    <script src="supabase-config.template.js"></script>
     <script src="demo-config.js"></script>
     <script src="auth.js"></script>
     <script src="game.js"></script>
