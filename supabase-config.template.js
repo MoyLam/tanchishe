@@ -155,14 +155,22 @@ class AuthManager {
         }
 
         try {
+            console.log('=== 登录调试信息 ===');
+            console.log('接收到的参数 - 用户名/邮箱:', usernameOrEmail);
+            console.log('参数类型:', typeof usernameOrEmail);
+            console.log('参数长度:', usernameOrEmail?.length);
+            
             let email = usernameOrEmail;
             
             // 检查输入是否是邮箱格式
             const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(usernameOrEmail);
+            console.log('是否为邮箱格式:', isEmail);
             
             // 如果输入的不是邮箱，则从数据库查找用户名对应的邮箱
             if (!isEmail) {
                 console.log('检测到输入为用户名，查找对应邮箱...');
+                console.log('查询条件 - username:', usernameOrEmail);
+                
                 const { data, error } = await supabase
                     .from('user_profiles')
                     .select('email')
@@ -174,16 +182,19 @@ class AuthManager {
                     return { error: '登录失败，请检查用户名和密码' };
                 }
                 
+                console.log('查询结果:', data);
+                
                 if (!data) {
                     console.warn('未找到用户名:', usernameOrEmail);
                     return { error: '用户名或密码错误' };
                 }
                 
                 email = data.email;
-                console.log('✓ 找到对应邮箱，将使用邮箱登录');
+                console.log('✓ 找到对应邮箱:', email);
             }
             
             // 使用邮箱登录
+            console.log('开始使用邮箱登录:', email);
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
                 password: password
