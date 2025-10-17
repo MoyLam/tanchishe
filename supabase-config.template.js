@@ -182,15 +182,23 @@ class AuthManager {
                 .from('user_profiles')
                 .select('*')
                 .eq('id', this.currentUser.id)
-                .single();
+                .maybeSingle();  // 改用 maybeSingle() 允许返回 null
 
-            if (error) throw error;
+            if (error) {
+                console.error('加载用户档案错误:', error);
+                return;
+            }
 
             if (data) {
                 this.currentPoints = data.points || 0;
+                console.log('✓ 用户档案加载成功，当前积分:', this.currentPoints);
+            } else {
+                console.warn('⚠ 未找到用户档案，可能需要在 Supabase 中创建 user_profiles 表');
+                this.currentPoints = 0;
             }
         } catch (error) {
             console.error('加载用户档案错误:', error);
+            this.currentPoints = 0;
         }
     }
 
