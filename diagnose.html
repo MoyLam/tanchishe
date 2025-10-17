@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase 配置诊断工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .status-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .status-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-error {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #ffc107;
+            color: white;
+        }
+        
+        .status-text {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .status-label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .status-detail {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        
+        .solution {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .solution-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .solution-steps {
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Supabase 配置诊断工具</h1>
+        <p class="subtitle">自动检测贪吃蛇游戏的 Supabase 配置状态</p>
+        
+        <div style="margin-bottom: 20px;">
+            <button onclick="runDiagnostics()">开始诊断</button>
+            <button onclick="testRegistration()">测试注册功能</button>
+            <button onclick="location.href='index.html'">返回游戏</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        
+        async function runDiagnostics() {
+            results.innerHTML = '<div class="loading"></div> 正在诊断...';
+            
+            const checks = [];
+            
+            // 检查 1: Supabase 库加载
+            checks.push({
+                name: 'Supabase 库加载',
+                status: typeof window.supabase !== 'undefined' ? 'success' : 'error',
+                message: typeof window.supabase !== 'undefined' 
+                    ? 'Supabase JS 库已成功加载' 
+                    : 'Supabase JS 库未加载',
+                solution: typeof window.supabase === 'undefined' 
+                    ? '请检查 index.html 中是否包含 Supabase CDN 链接' 
+                    : null
+            });
+            
+            // 检查 2: 配置文件
+            checks.push({
+                name: '配置文件',
+                status: typeof isConfigured !== 'undefined' ? 'success' : 'error',
+                message: typeof isConfigured !== 'undefined' 
+                    ? 'supabase-config.js 已加载' 
+                    : 'supabase-config.js 未加载',
+                solution: typeof isConfigured === 'undefined' 
+                    ? '请确保 supabase-config.js 文件存在并已正确引入' 
+                    : null
+            });
+            
+            // 检查 3: 配置状态
+            if (typeof isConfigured !== 'undefined') {
+                checks.push({
+                    name: 'Supabase 配置',
+                    status: isConfigured ? 'success' : 'error',
+                    message: isConfigured 
+                        ? 'Supabase 已正确配置' 
+                        : 'Supabase 未配置或配置错误',
+                    detail: isConfigured 
+                        ? `URL: ${typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL.substring(0, 30) + '...' : '未定义'}` 
+                        : '请检查 GitHub Secrets 配置',
+                    solution: !isConfigured 
+                        ? '1. 检查 GitHub Secrets 是否正确配置\n2. 重新触发 GitHub Actions 部署' 
+                        : null
+                });
+            }
+            
+            // 检查 4: Supabase 客户端
+            checks.push({
+                name: 'Supabase 客户端',
+                status: supabase !== null ? 'success' : 'error',
+                message: supabase !== null 
+                    ? 'Supabase 客户端已初始化' 
+                    : 'Supabase 客户端未初始化',
+                solution: supabase === null 
+                    ? '请确保配置正确并刷新页面' 
+                    : null
+            });
+            
+            // 检查 5: 网络连接测试
+            if (supabase) {
+                try {
+                    const { data, error } = await supabase.auth.getSession();
+                    checks.push({
+                        name: 'Supabase 连接',
+                        status: error ? 'error' : 'success',
+                        message: error ? `连接失败: ${error.message}` : 'Supabase 连接正常',
+                        solution: error 
+                            ? '请检查网络连接和 Supabase 项目状态' 
+                            : null
+                    });
+                } catch (err) {
+                    checks.push({
+                        name: 'Supabase 连接',
+                        status: 'error',
+                        message: `连接错误: ${err.message}`,
+                        solution: '可能是 CORS 配置问题，请在 Supabase Dashboard 中配置允许的域名'
+                    });
+                }
+            }
+            
+            // 检查 6: authManager
+            checks.push({
+                name: '认证管理器',
+                status: typeof authManager !== 'undefined' && authManager !== null ? 'success' : 'error',
+                message: typeof authManager !== 'undefined' && authManager !== null 
+                    ? '认证管理器已初始化' 
+                    : '认证管理器未初始化',
+                solution: typeof authManager === 'undefined' || authManager === null 
+                    ? '请刷新页面或检查 auth.js 是否正确加载' 
+                    : null
+            });
+            
+            displayResults(checks);
+        }
+        
+        function displayResults(checks) {
+            let html = '';
+            let hasErrors = false;
+            
+            checks.forEach((check, index) => {
+                const iconMap = {
+                    'success': '✓',
+                    'error': '✗',
+                    'warning': '⚠'
+                };
+                
+                if (check.status === 'error') hasErrors = true;
+                
+                html += `
+                    <div class="section">
+                        <div class="status-item">
+                            <div class="status-icon status-${check.status}">
+                                ${iconMap[check.status]}
+                            </div>
+                            <div class="status-text">
+                                <div class="status-label">${check.name}</div>
+                                <div class="status-detail">${check.message}</div>
+                                ${check.detail ? `<div class="status-detail">${check.detail}</div>` : ''}
+                            </div>
+                        </div>
+                        ${check.solution ? `
+                            <div class="solution">
+                                <div class="solution-title">💡 解决方案：</div>
+                                <div class="solution-steps">${check.solution.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            if (!hasErrors) {
+                html += `
+                    <div class="section" style="border-left-color: #28a745; background: #d4edda;">
+                        <div class="section-title" style="color: #155724;">
+                            ✅ 所有检查通过！配置正常
+                        </div>
+                        <div style="color: #155724; font-size: 14px;">
+                            如果仍然无法注册，请检查：<br>
+                            1. Supabase Dashboard 中的 URL Configuration<br>
+                            2. Email Provider 的邮箱验证设置<br>
+                            3. user_profiles 表和 RLS 策略
+                        </div>
+                    </div>
+                `;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        async function testRegistration() {
+            if (!supabase) {
+                alert('Supabase 未初始化，请先运行诊断');
+                return;
+            }
+            
+            const email = `test${Date.now()}@example.com`;
+            const password = 'test123456';
+            const username = `testuser${Date.now()}`;
+            
+            results.innerHTML = '<div class="loading"></div> 正在测试注册功能...';
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            username: username
+                        }
+                    }
+                });
+                
+                if (error) throw error;
+                
+                results.innerHTML = `
+                    <div class="section" style="border-left-color: #28a745; background: #d4edda;">
+                        <div class="section-title" style="color: #155724;">
+                            ✅ 注册测试成功！
+                        </div>
+                        <div style="color: #155724; font-size: 14px;">
+                            测试账户：${email}<br>
+                            用户名：${username}<br>
+                            <br>
+                            <strong>注意：</strong>如果启用了邮箱验证，需要验证邮箱后才能登录。
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="section" style="border-left-color: #dc3545; background: #f8d7da;">
+                        <div class="section-title" style="color: #721c24;">
+                            ❌ 注册测试失败
+                        </div>
+                        <div style="color: #721c24; font-size: 14px; margin-bottom: 15px;">
+                            错误信息：${error.message}
+                        </div>
+                        <div class="code-block">${JSON.stringify(error, null, 2)}</div>
+                        <div class="solution">
+                            <div class="solution-title">💡 可能的解决方案：</div>
+                            <div class="solution-steps">
+                                ${getSolutionForError(error.message)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function getSolutionForError(errorMessage) {
+            if (errorMessage.includes('CORS')) {
+                return `
+                    <strong>CORS 错误</strong><br>
+                    1. 登录 Supabase Dashboard<br>
+                    2. 导航到 Authentication → URL Configuration<br>
+                    3. 在 Site URL 中添加：https://moylam.github.io/tanchishe<br>
+                    4. 在 Redirect URLs 中添加：https://moylam.github.io/tanchishe/*
+                `;
+            } else if (errorMessage.includes('permission') || errorMessage.includes('406')) {
+                return `
+                    <strong>数据库权限错误</strong><br>
+                    1. 检查 user_profiles 表是否存在<br>
+                    2. 确保 RLS (Row Level Security) 策略已正确配置<br>
+                    3. 参考 TROUBLESHOOTING.md 中的 SQL 脚本创建表和策略
+                `;
+            } else if (errorMessage.includes('Email')) {
+                return `
+                    <strong>邮箱配置错误</strong><br>
+                    1. 导航到 Authentication → Providers → Email<br>
+                    2. 暂时禁用 "Confirm email" 进行测试<br>
+                    3. 或配置正确的 SMTP 设置
+                `;
+            } else {
+                return `
+                    <strong>通用解决方案</strong><br>
+                    1. 查看浏览器控制台的详细错误信息<br>
+                    2. 检查 Supabase Dashboard 的日志<br>
+                    3. 参考 TROUBLESHOOTING.md 文档<br>
+                    4. 确保所有配置正确
+                `;
+            }
+        }
+        
+        // 页面加载时自动运行诊断
+        window.addEventListener('load', () => {
+            setTimeout(runDiagnostics, 500);
+        });
+    </script>
+</body>
+</html>
