@@ -3,8 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # 或者你的主分支名称
-  workflow_dispatch:  # 允许手动触发
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Generate Supabase Config
+      - name: Inject Supabase Config
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -33,273 +33,15 @@ jobs:
             echo "Error: SUPABASE_ANON_KEY is not set"
             exit 1
           fi
-          echo "Secrets are configured correctly"
-          echo "Generating supabase-config.js..."
-          cat > supabase-config.js << EOF
-          // Supabase配置文件
-          // 此文件由 GitHub Actions 自动生成
-          // 生成时间: $(date '+%Y-%m-%d %H:%M:%S')
+          echo "✓ Secrets are configured"
           
-          const SUPABASE_URL = '$SUPABASE_URL';
-          const SUPABASE_ANON_KEY = '$SUPABASE_ANON_KEY';
+          echo "Injecting config into index.html..."
+          # 替换 index.html 中的 supabase-config.js 引用为内联配置
+          sed -i 's|<script src="supabase-config.js"></script>|<script>\n// Supabase Config (injected by GitHub Actions)\nwindow.SUPABASE_URL='"'$SUPABASE_URL'"';\nwindow.SUPABASE_ANON_KEY='"'$SUPABASE_ANON_KEY'"';\nwindow.isConfigured=true;\n</script>|' index.html
           
-          const isConfigured = SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && 
-                              SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE' &&
-                              SUPABASE_URL && SUPABASE_ANON_KEY;
-          
-          // 确保全局可访问
-          window.SUPABASE_URL = SUPABASE_URL;
-          window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
-          window.isConfigured = isConfigured;
-          
-          let supabase = null;
-          let authManager = null;
-          
-          // 初始化 Supabase 客户端
-          if (isConfigured && typeof window !== 'undefined' && window.supabase) {
-              try {
-                  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                  window.supabaseClient = supabase;  // 暴露到全局
-                  console.log('✓ Supabase客户端初始化成功');
-                  console.log('URL:', SUPABASE_URL);
-              } catch (error) {
-                  console.error('✗ Supabase客户端初始化失败:', error);
-              }
-          } else {
-              console.warn('⚠ Supabase未配置，将使用演示模式');
-              if (!window.supabase) {
-                  console.error('✗ Supabase JS 库未加载！请检查 CDN 链接');
-              }
-          }
-          
-          class AuthManager {
-              constructor() {
-                  this.currentUser = null;
-                  this.currentPoints = 0;
-              }
-          
-              async init() {
-                  if (isConfigured && supabase) {
-                      try {
-                          const { data: { session } } = await supabase.auth.getSession();
-                          if (session) {
-                              this.currentUser = session.user;
-                              await this.loadUserProfile();
-                          }
-          
-                          supabase.auth.onAuthStateChange((event, session) => {
-                              if (event === 'SIGNED_IN') {
-                                  this.currentUser = session.user;
-                                  this.loadUserProfile();
-                                  this.showGameInterface();
-                              } else if (event === 'SIGNED_OUT') {
-                                  this.currentUser = null;
-                                  this.currentPoints = 0;
-                                  this.showAuthInterface();
-                              }
-                          });
-                      } catch (error) {
-                          console.error('认证初始化错误:', error);
-                      }
-                  } else {
-                      console.log('演示模式：使用本地存储');
-                  }
-          
-                  if (!isConfigured) {
-                      this.showGameInterface();
-                  } else if (this.currentUser) {
-                      this.showGameInterface();
-                  } else {
-                      this.showAuthInterface();
-                  }
-              }
-          
-              async register(email, password, username) {
-                  if (!isConfigured) {
-                      return window.demoStorage?.register(email, password, username) || 
-                             { success: false, message: '演示模式：注册功能不可用' };
-                  }
-                  if (!supabase) {
-                      return { success: false, message: 'Supabase未正确配置' };
-                  }
-                  try {
-                      const { data, error } = await supabase.auth.signUp({
-                          email: email,
-                          password: password,
-                          options: { data: { username: username } }
-                      });
-                      if (error) throw error;
-                      if (data.user) {
-                          await this.createUserProfile(data.user.id, username, email);
-                          return { success: true, message: '注册成功！请检查邮箱验证链接。' };
-                      }
-                  } catch (error) {
-                      console.error('注册错误:', error);
-                      return { success: false, message: error.message || '注册失败，请稍后重试' };
-                  }
-              }
-          
-              async login(emailOrUsername, password) {
-                  if (!isConfigured) {
-                      return window.demoStorage?.login(emailOrUsername, password) || 
-                             { success: false, message: '演示模式：登录功能不可用' };
-                  }
-                  if (!supabase) {
-                      return { success: false, message: 'Supabase未正确配置' };
-                  }
-                  try {
-                      const { data, error } = await supabase.auth.signInWithPassword({
-                          email: emailOrUsername,
-                          password: password
-                      });
-                      if (error) throw error;
-                      return { success: true, message: '登录成功！', user: data.user };
-                  } catch (error) {
-                      console.error('登录错误:', error);
-                      return { success: false, message: '用户名或密码错误' };
-                  }
-              }
-          
-              async logout() {
-                  if (!isConfigured) {
-                      return window.demoStorage?.logout() || { success: true, message: '已退出登录' };
-                  }
-                  if (!supabase) {
-                      return { success: false, message: 'Supabase未正确配置' };
-                  }
-                  try {
-                      const { error } = await supabase.auth.signOut();
-                      if (error) throw error;
-                      return { success: true, message: '已退出登录' };
-                  } catch (error) {
-                      console.error('退出错误:', error);
-                      return { success: false, message: '退出失败，请稍后重试' };
-                  }
-              }
-          
-              async createUserProfile(userId, username, email) {
-                  if (!isConfigured || !supabase) return;
-                  try {
-                      const { error } = await supabase.from('user_profiles').insert([{
-                          id: userId, username: username, email: email, points: 100, high_score: 0
-                      }]);
-                      if (error) throw error;
-                  } catch (error) {
-                      console.error('创建用户档案错误:', error);
-                  }
-              }
-          
-              async loadUserProfile() {
-                  if (!isConfigured || !supabase || !this.currentUser) return;
-                  try {
-                      const { data, error } = await supabase.from('user_profiles').select('*')
-                          .eq('id', this.currentUser.id).single();
-                      if (error) throw error;
-                      if (data) {
-                          this.currentPoints = data.points || 0;
-                          this.updateUIPoints();
-                      }
-                  } catch (error) {
-                      console.error('加载用户档案错误:', error);
-                  }
-              }
-          
-              async updateUserPoints(points) {
-                  if (!isConfigured) return window.demoStorage?.updatePoints(points);
-                  if (!supabase || !this.currentUser) return;
-                  try {
-                      this.currentPoints = points;
-                      const { error } = await supabase.from('user_profiles')
-                          .update({ points: this.currentPoints }).eq('id', this.currentUser.id);
-                      if (error) throw error;
-                      this.updateUIPoints();
-                  } catch (error) {
-                      console.error('更新用户积分错误:', error);
-                  }
-              }
-          
-              async updateHighScore(score) {
-                  if (!isConfigured) return window.demoStorage?.updateHighScore(score);
-                  if (!supabase || !this.currentUser) return;
-                  try {
-                      const { error } = await supabase.from('user_profiles')
-                          .update({ high_score: score }).eq('id', this.currentUser.id);
-                      if (error) throw error;
-                  } catch (error) {
-                      console.error('更新最高分错误:', error);
-                  }
-              }
-          
-              getCurrentUser() {
-                  if (!isConfigured) return window.demoStorage?.getCurrentUser();
-                  return this.currentUser;
-              }
-          
-              getCurrentPoints() {
-                  if (!isConfigured) return window.demoStorage?.getCurrentPoints() || 0;
-                  return this.currentPoints;
-              }
-          
-              updateUIPoints() {
-                  const pointsElement = document.getElementById('user-points');
-                  const usernameElement = document.getElementById('username-display');
-                  if (pointsElement) pointsElement.textContent = this.currentPoints;
-                  if (usernameElement && this.currentUser) {
-                      const username = this.currentUser.user_metadata?.username || 
-                                      this.currentUser.email?.split('@')[0] || '用户';
-                      usernameElement.textContent = username;
-                  }
-              }
-          
-              showAuthInterface() {
-                  const authContainer = document.getElementById('auth-container');
-                  const gameContainer = document.getElementById('game-container');
-                  if (authContainer) authContainer.style.display = 'block';
-                  if (gameContainer) gameContainer.style.display = 'none';
-              }
-          
-              showGameInterface() {
-                  const authContainer = document.getElementById('auth-container');
-                  const gameContainer = document.getElementById('game-container');
-                  if (authContainer) authContainer.style.display = 'none';
-                  if (gameContainer) gameContainer.style.display = 'block';
-                  this.updateUIPoints();
-              }
-          }
-          
-          // 初始化认证管理器
-          async function initializeAuth() {
-              authManager = new AuthManager();
-              window.authManager = authManager;  // 暴露到全局
-              await authManager.init();
-              console.log('✓ 认证管理器初始化完成');
-          }
-          
-          if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', initializeAuth);
-          } else {
-              initializeAuth();
-          }
-          EOF
-      
-      - name: Verify Generated Config
-        run: |
-          echo "Verifying supabase-config.js was created..."
-          if [ ! -f supabase-config.js ]; then
-            echo "Error: supabase-config.js was not created"
-            exit 1
-          fi
-          echo "✓ supabase-config.js created successfully"
-          echo "File size: $(wc -c < supabase-config.js) bytes"
-          echo "First 10 lines:"
-          head -n 10 supabase-config.js
-          echo "Checking if URLs are properly substituted..."
-          if grep -q 'SUPABASE_URL' supabase-config.js && ! grep -q '\${{' supabase-config.js; then
-            echo "✓ Environment variables properly substituted"
-          else
-            echo "✗ Warning: Variables may not be properly substituted"
-            grep 'SUPABASE_URL\|SUPABASE_ANON_KEY' supabase-config.js | head -n 5
-          fi
+          echo "✓ Configuration injected"
+          echo "Verifying injection..."
+          grep -A3 "Supabase Config" index.html || echo "Warning: Config not found in HTML"
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
