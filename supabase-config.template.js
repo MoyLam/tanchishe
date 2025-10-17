@@ -120,10 +120,20 @@ class AuthManager {
 
             if (data.user) {
                 console.log('✓ 用户创建成功，用户 ID:', data.user.id);
-                // 注意：user_profiles 记录由 Supabase 触发器自动创建，无需手动调用
-                // 等待触发器创建档案（给数据库一点时间）
-                await new Promise(resolve => setTimeout(resolve, 500));
-                return { success: true, message: '注册成功！' };
+                
+                // 设置当前用户（Supabase v2 注册成功后会自动登录）
+                this.currentUser = data.user;
+                
+                // 等待触发器创建档案
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // 加载用户档案
+                await this.loadUserProfile();
+                
+                // 显示游戏界面
+                this.showGameInterface();
+                
+                return { success: true, message: '注册成功！欢迎加入贪吃蛇游戏！' };
             } else {
                 console.warn('⚠ 注册返回数据异常:', data);
                 return { error: '注册失败，请稍后重试' };
@@ -223,9 +233,11 @@ class AuthManager {
             if (data) {
                 this.currentPoints = data.points || 0;
                 console.log('✓ 用户档案加载成功，当前积分:', this.currentPoints);
+                this.updateUIPoints();  // 更新UI显示
             } else {
                 console.warn('⚠ 未找到用户档案，可能需要在 Supabase 中创建 user_profiles 表');
                 this.currentPoints = 0;
+                this.updateUIPoints();  // 仍然更新UI，显示用户名
             }
         } catch (error) {
             console.error('加载用户档案错误:', error);
@@ -248,6 +260,7 @@ class AuthManager {
                 .eq('id', this.currentUser.id);
 
             if (error) throw error;
+            this.updateUIPoints();  // 更新UI显示
         } catch (error) {
             console.error('更新用户积分错误:', error);
         }
@@ -286,6 +299,22 @@ class AuthManager {
         return this.currentPoints;
     }
 
+    updateUIPoints() {
+        const pointsElement = document.getElementById('user-points');
+        const usernameElement = document.getElementById('username-display');
+        
+        if (pointsElement) {
+            pointsElement.textContent = this.currentPoints;
+        }
+        
+        if (usernameElement && this.currentUser) {
+            const username = this.currentUser.user_metadata?.username || this.currentUser.email?.split('@')[0] || '用户';
+            usernameElement.textContent = username;
+        }
+        
+        console.log('✓ UI已更新 - 用户名:', usernameElement?.textContent, '积分:', this.currentPoints);
+    }
+
     showAuthInterface() {
         const authContainer = document.getElementById('auth-container');
         const gameContainer = document.getElementById('game-container');
@@ -300,6 +329,9 @@ class AuthManager {
         
         if (authContainer) authContainer.style.display = 'none';
         if (gameContainer) gameContainer.style.display = 'block';
+        
+        // 更新界面显示
+        this.updateUIPoints();
     }
 }
 
