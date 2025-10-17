@@ -47,18 +47,29 @@ jobs:
                               SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE' &&
                               SUPABASE_URL && SUPABASE_ANON_KEY;
           
+          // 确保全局可访问
+          window.SUPABASE_URL = SUPABASE_URL;
+          window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+          window.isConfigured = isConfigured;
+          
           let supabase = null;
           let authManager = null;
           
+          // 初始化 Supabase 客户端
           if (isConfigured && typeof window !== 'undefined' && window.supabase) {
               try {
                   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                  console.log('Supabase客户端初始化成功');
+                  window.supabaseClient = supabase;  // 暴露到全局
+                  console.log('✓ Supabase客户端初始化成功');
+                  console.log('URL:', SUPABASE_URL);
               } catch (error) {
-                  console.error('Supabase客户端初始化失败:', error);
+                  console.error('✗ Supabase客户端初始化失败:', error);
               }
           } else {
-              console.log('Supabase未配置，将使用演示模式');
+              console.warn('⚠ Supabase未配置，将使用演示模式');
+              if (!window.supabase) {
+                  console.error('✗ Supabase JS 库未加载！请检查 CDN 链接');
+              }
           }
           
           class AuthManager {
@@ -256,9 +267,12 @@ jobs:
               }
           }
           
+          // 初始化认证管理器
           async function initializeAuth() {
               authManager = new AuthManager();
+              window.authManager = authManager;  // 暴露到全局
               await authManager.init();
+              console.log('✓ 认证管理器初始化完成');
           }
           
           if (document.readyState === 'loading') {
