@@ -243,7 +243,10 @@ class AuthUI {
                     this.showLoginForm();
                 }, 2000);
             } else {
-                this.showMessage(result.message, 'error');
+                // 显示详细的错误信息
+                const errorMsg = result.error || result.message || '注册失败，请稍后重试';
+                console.error('注册失败:', errorMsg);
+                this.showMessage(errorMsg, 'error');
             }
         } catch (error) {
             this.showMessage('注册失败，请稍后重试', 'error');
