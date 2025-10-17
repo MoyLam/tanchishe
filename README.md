@@ -14,6 +14,56 @@
 
 ## 🚀 快速开始
 
+### 本地开发
+
+1. **配置 Supabase**
+   ```bash
+   # 复制环境变量示例文件
+   cp .env.example .env
+   
+   # 编辑 .env 文件，填入你的 Supabase 配置
+   # 在 https://supabase.com/dashboard 获取配置信息
+   ```
+
+2. **生成配置文件**
+   ```bash
+   # Windows PowerShell
+   .\generate-config.ps1
+   
+   # Linux/Mac
+   chmod +x generate-config.sh
+   ./generate-config.sh
+   ```
+
+3. **打开游戏**
+   
+   直接用浏览器打开 `index.html` 文件即可开始游戏。
+
+### 部署到服务器
+
+#### 方案 1：GitHub Actions 自动部署（推荐）
+
+完全自动化，推送代码即可部署！
+
+```bash
+# 1. 配置 GitHub Secrets（仅需一次）
+#    参考：setup-github-secrets.md
+
+# 2. 推送代码
+git push origin main
+
+# 3. 访问你的网站
+#    https://你的用户名.github.io/仓库名/
+```
+
+详细说明：[GITHUB-DEPLOY.md](GITHUB-DEPLOY.md)
+
+#### 方案 2：手动部署
+
+详细部署说明请参考 [DEPLOYMENT.md](DEPLOYMENT.md) 文档。
+
+**重要提示：** 部署时必须包含生成的 `supabase-config.js` 文件！
+
 ## 🎯 游戏规则
 
 - 使用方向键或 WASD 控制蛇的移动

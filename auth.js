@@ -131,17 +131,17 @@ class AuthUI {
     }
 
     async handleLogin() {
-        const username = document.getElementById('login-username')?.value?.trim();
+        const usernameOrEmail = document.getElementById('login-username')?.value?.trim();
         const password = document.getElementById('login-password')?.value;
 
         // 表单验证
-        if (!username || !password) {
-            this.showMessage('请填写用户名和密码', 'error');
+        if (!usernameOrEmail || !password) {
+            this.showMessage('请填写用户名/邮箱和密码', 'error');
             return;
         }
 
-        if (username.length < 3) {
-            this.showMessage('用户名至少需要3个字符', 'error');
+        if (usernameOrEmail.length < 3) {
+            this.showMessage('用户名/邮箱至少需要3个字符', 'error');
             return;
         }
 
@@ -160,7 +160,7 @@ class AuthUI {
                 return;
             }
 
-            const result = await authManager.login(username, password);
+            const result = await authManager.login(usernameOrEmail, password);
             
             if (result.success) {
                 this.showMessage(result.message, 'success');
