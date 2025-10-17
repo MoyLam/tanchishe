@@ -1,0 +1,8 @@
+index.html
+style.css
+game.js
+auth.js
+demo-config.js
+supabase-config.js
+README.md
+DEPLOYMENT.md

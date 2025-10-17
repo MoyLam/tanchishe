@@ -1,0 +1,14 @@
+# 部署到服务器需要上传的文件清单
+# 生成时间: 2025-10-17 08:52:33
+
+index.html
+style.css
+game.js
+auth.js
+demo-config.js
+supabase-config.js
+README.md
+DEPLOYMENT.md
+DEPLOY-GUIDE.txt
+SECURITY.md
+SUPABASE_SETUP.md

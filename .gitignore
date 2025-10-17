@@ -1,0 +1,54 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+
+# 操作系统
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+*~
+
+# 缓存
+.cache/
+*.cache
+
+# 敏感配置文件 - 防止Supabase密钥泄露
+supabase-config.js
+config.js
+.env
+.env.local
+.env.production
+.env.development
+
+# 备份文件
+*.bak
+*.backup
+*~
+
+# 用户特定配置
+user-config.js
+local-config.js
