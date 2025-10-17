@@ -245,15 +245,16 @@ class AuthManager {
         }
     }
 
-    async updateUserPoints(points) {
+    async updateUserPoints(newTotalPoints) {
+        // 注意：这个方法接收的是新的总积分，不是增量
         if (!isConfigured) {
-            return window.demoStorage?.updatePoints(points);
+            return window.demoStorage?.updatePoints(newTotalPoints);
         }
 
         if (!supabase || !this.currentUser) return;
 
         try {
-            this.currentPoints += points;
+            this.currentPoints = newTotalPoints;  // ✅ 直接设置为新值，不再相加
             const { error } = await supabase
                 .from('user_profiles')
                 .update({ points: this.currentPoints })
@@ -261,8 +262,33 @@ class AuthManager {
 
             if (error) throw error;
             this.updateUIPoints();  // 更新UI显示
+            console.log('✓ 积分已更新为:', this.currentPoints);
         } catch (error) {
             console.error('更新用户积分错误:', error);
+        }
+    }
+
+    async addUserPoints(pointsToAdd) {
+        // 这个方法用于增加积分（增量）
+        if (!isConfigured) {
+            const currentPoints = window.demoStorage?.getCurrentPoints() || 0;
+            return window.demoStorage?.updatePoints(currentPoints + pointsToAdd);
+        }
+
+        if (!supabase || !this.currentUser) return;
+
+        try {
+            this.currentPoints += pointsToAdd;  // ✅ 增加积分
+            const { error } = await supabase
+                .from('user_profiles')
+                .update({ points: this.currentPoints })
+                .eq('id', this.currentUser.id);
+
+            if (error) throw error;
+            this.updateUIPoints();  // 更新UI显示
+            console.log(`✓ 积分增加 +${pointsToAdd}，总积分: ${this.currentPoints}`);
+        } catch (error) {
+            console.error('增加用户积分错误:', error);
         }
     }
 
