@@ -1,0 +1,11 @@
+{
+  "name": "snake-game",
+  "version": "1.0.0",
+  "description": "贪吃蛇游戏",
+  "scripts": {
+    "build": "bash build-vercel.sh || sh build-vercel.sh || echo 'Build script not available'"
+  },
+  "keywords": ["game", "snake"],
+  "author": "",
+  "license": "MIT"
+}
