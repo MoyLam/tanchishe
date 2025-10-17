@@ -1,17 +1,18 @@
 // Supabase配置模板文件
 // 使用说明：
-// 1. 复制此文件为 supabase-config.js
-// 2. 替换下面的占位符为你的实际Supabase配置
-// 3. 确保 supabase-config.js 已添加到 .gitignore 中
+// 1. 本地开发：复制此文件为 supabase-config.js 并填写配置
+// 2. 生产部署：由 GitHub Actions 自动注入到 index.html
 
-// Supabase配置 - 请替换为你的实际配置
-const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+// 检查是否由 GitHub Actions 注入了配置
+const SUPABASE_URL = window.SUPABASE_URL || 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY_HERE';
 
 // 检查配置是否已更新
-const isConfigured = SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && 
-                    SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE' &&
-                    SUPABASE_URL && SUPABASE_ANON_KEY;
+const isConfigured = window.isConfigured || (
+    SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && 
+    SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE' &&
+    SUPABASE_URL && SUPABASE_ANON_KEY
+);
 
 let supabase = null;
 let authManager = null;
@@ -20,12 +21,18 @@ let authManager = null;
 if (isConfigured && typeof window !== 'undefined' && window.supabase) {
     try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase客户端初始化成功');
+        window.supabaseClient = supabase;  // 暴露到全局
+        console.log('✓ Supabase客户端初始化成功');
+        console.log('URL:', SUPABASE_URL.substring(0, 30) + '...');
     } catch (error) {
-        console.error('Supabase客户端初始化失败:', error);
+        console.error('✗ Supabase客户端初始化失败:', error);
     }
 } else {
-    console.log('Supabase未配置，将使用演示模式');
+    if (!isConfigured) {
+        console.log('⚠ Supabase未配置，将使用演示模式');
+    } else if (!window.supabase) {
+        console.error('✗ Supabase JS 库未加载！请检查 CDN 链接');
+    }
 }
 
 // 认证管理器类
@@ -260,7 +267,9 @@ class AuthManager {
 // 初始化认证管理器
 async function initializeAuth() {
     authManager = new AuthManager();
+    window.authManager = authManager;  // 暴露到全局
     await authManager.init();
+    console.log('✓ 认证管理器初始化完成');
 }
 
 // 页面加载完成后初始化
