@@ -6,6 +6,11 @@ on:
       - main  # 或者你的主分支名称
   workflow_dispatch:  # 允许手动触发
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,6 +24,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          echo "Checking Secrets..."
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "Error: SUPABASE_URL is not set"
+            exit 1
+          fi
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Error: SUPABASE_ANON_KEY is not set"
+            exit 1
+          fi
+          echo "Secrets are configured correctly"
+          echo "Generating supabase-config.js..."
           cat > supabase-config.js << 'EOF'
           // Supabase配置文件
           // 此文件由 GitHub Actions 自动生成
@@ -251,6 +267,16 @@ jobs:
               initializeAuth();
           }
           EOF
+      
+      - name: Verify Generated Config
+        run: |
+          echo "Verifying supabase-config.js was created..."
+          if [ ! -f supabase-config.js ]; then
+            echo "Error: supabase-config.js was not created"
+            exit 1
+          fi
+          echo "✓ supabase-config.js created successfully"
+          echo "File size: $(wc -c < supabase-config.js) bytes"
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
