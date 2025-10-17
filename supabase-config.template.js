@@ -144,9 +144,9 @@ class AuthManager {
         }
     }
 
-    async login(email, password) {
+    async login(usernameOrEmail, password) {
         if (!isConfigured) {
-            return window.demoStorage?.login(email, password) || 
+            return window.demoStorage?.login(usernameOrEmail, password) || 
                    { error: '演示模式：登录功能不可用' };
         }
 
@@ -155,15 +155,56 @@ class AuthManager {
         }
 
         try {
+            let email = usernameOrEmail;
+            
+            // 检查输入是否是邮箱格式
+            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(usernameOrEmail);
+            
+            // 如果输入的不是邮箱，则从数据库查找用户名对应的邮箱
+            if (!isEmail) {
+                console.log('检测到输入为用户名，查找对应邮箱...');
+                const { data, error } = await supabase
+                    .from('user_profiles')
+                    .select('email')
+                    .eq('username', usernameOrEmail)
+                    .maybeSingle();
+                
+                if (error) {
+                    console.error('查找用户名错误:', error);
+                    return { error: '登录失败，请检查用户名和密码' };
+                }
+                
+                if (!data) {
+                    console.warn('未找到用户名:', usernameOrEmail);
+                    return { error: '用户名或密码错误' };
+                }
+                
+                email = data.email;
+                console.log('✓ 找到对应邮箱，将使用邮箱登录');
+            }
+            
+            // 使用邮箱登录
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
                 password: password
             });
 
-            if (error) throw error;
-            return { success: true, user: data.user };
+            if (error) {
+                console.error('登录错误:', error);
+                let errorMessage = error.message;
+                if (error.message.includes('Invalid login credentials')) {
+                    errorMessage = '用户名/邮箱或密码错误';
+                } else if (error.message.includes('Email not confirmed')) {
+                    errorMessage = '请先验证邮箱后再登录';
+                }
+                return { error: errorMessage };
+            }
+            
+            console.log('✓ 登录成功');
+            return { success: true, user: data.user, message: '登录成功！' };
         } catch (error) {
-            return { error: error.message };
+            console.error('登录异常:', error);
+            return { error: error.message || '登录失败，请稍后重试' };
         }
     }
 
