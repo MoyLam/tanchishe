@@ -238,10 +238,8 @@ class AuthUI {
             if (result.success) {
                 this.showMessage(result.message, 'success');
                 this.clearForms();
-                // 注册成功后自动切换到登录界面
-                setTimeout(() => {
-                    this.showLoginForm();
-                }, 2000);
+                // 注册成功后直接显示游戏界面（authManager 已经处理）
+                // 不需要再切换到登录界面
             } else {
                 // 显示详细的错误信息
                 const errorMsg = result.error || result.message || '注册失败，请稍后重试';
