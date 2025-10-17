@@ -90,6 +90,8 @@ class AuthManager {
         }
 
         try {
+            console.log('开始注册，用户名:', username, '邮箱:', email);
+            
             const { data, error } = await supabase.auth.signUp({
                 email: email,
                 password: password,
@@ -100,14 +102,33 @@ class AuthManager {
                 }
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error('注册错误详情:', error);
+                // 返回更友好的错误提示
+                let errorMessage = error.message;
+                if (error.message.includes('User already registered')) {
+                    errorMessage = '该邮箱已被注册，请使用其他邮箱或直接登录';
+                } else if (error.message.includes('Password should be at least')) {
+                    errorMessage = '密码至少需要 6 个字符';
+                } else if (error.message.includes('invalid email')) {
+                    errorMessage = '邮箱格式不正确';
+                } else if (error.message.includes('Unable to validate email address')) {
+                    errorMessage = '无法验证邮箱地址，请检查邮箱格式';
+                }
+                return { error: errorMessage };
+            }
 
             if (data.user) {
+                console.log('✓ 用户创建成功，用户 ID:', data.user.id);
                 await this.createUserProfile(data.user.id, username, email);
                 return { success: true, message: '注册成功！请检查邮箱验证链接。' };
+            } else {
+                console.warn('⚠ 注册返回数据异常:', data);
+                return { error: '注册失败，请稍后重试' };
             }
         } catch (error) {
-            return { error: error.message };
+            console.error('注册异常:', error);
+            return { error: error.message || '注册失败，请稍后重试' };
         }
     }
 
