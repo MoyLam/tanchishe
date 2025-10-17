@@ -120,8 +120,10 @@ class AuthManager {
 
             if (data.user) {
                 console.log('✓ 用户创建成功，用户 ID:', data.user.id);
-                await this.createUserProfile(data.user.id, username, email);
-                return { success: true, message: '注册成功！请检查邮箱验证链接。' };
+                // 注意：user_profiles 记录由 Supabase 触发器自动创建，无需手动调用
+                // 等待触发器创建档案（给数据库一点时间）
+                await new Promise(resolve => setTimeout(resolve, 500));
+                return { success: true, message: '注册成功！' };
             } else {
                 console.warn('⚠ 注册返回数据异常:', data);
                 return { error: '注册失败，请稍后重试' };
@@ -174,24 +176,32 @@ class AuthManager {
     }
 
     async createUserProfile(userId, username, email) {
+        // 注意：此方法已被触发器替代，保留作为备用
+        // Supabase 触发器会在用户注册时自动创建 user_profiles 记录
         if (!isConfigured || !supabase) return;
 
         try {
+            // 使用 upsert 替代 insert，如果已存在则更新，不存在则插入
             const { error } = await supabase
                 .from('user_profiles')
-                .insert([
+                .upsert(
                     {
                         id: userId,
                         username: username,
                         email: email,
                         points: 100,
                         high_score: 0
-                    }
-                ]);
+                    },
+                    { onConflict: 'id' }  // 如果 ID 冲突则不报错
+                );
 
             if (error) throw error;
+            console.log('✓ 用户档案创建/更新成功');
         } catch (error) {
-            console.error('创建用户档案错误:', error);
+            // 如果是重复键错误，不记录，因为这是预期的
+            if (!error.message.includes('duplicate key')) {
+                console.error('创建用户档案错误:', error);
+            }
         }
     }
 
