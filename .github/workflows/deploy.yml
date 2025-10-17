@@ -36,12 +36,13 @@ jobs:
           echo "✓ Secrets are configured"
           
           echo "Injecting config into index.html..."
-          # 替换 index.html 中的 supabase-config.js 引用为内联配置
-          sed -i 's|<script src="supabase-config.js"></script>|<script>\n// Supabase Config (injected by GitHub Actions)\nwindow.SUPABASE_URL='"'$SUPABASE_URL'"';\nwindow.SUPABASE_ANON_KEY='"'$SUPABASE_ANON_KEY'"';\nwindow.isConfigured=true;\n</script>|' index.html
+          # 替换 index.html 中的占位符为内联配置
+          CONFIG_SCRIPT="<script>\n    // Supabase Config (injected by GitHub Actions)\n    window.SUPABASE_URL='$SUPABASE_URL';\n    window.SUPABASE_ANON_KEY='$SUPABASE_ANON_KEY';\n    window.isConfigured=true;\n    console.log('✓ Supabase 配置已注入');\n    </script>"
+          sed -i "s|<!-- SUPABASE_CONFIG_PLACEHOLDER -->|$CONFIG_SCRIPT|" index.html
           
           echo "✓ Configuration injected"
           echo "Verifying injection..."
-          grep -A3 "Supabase Config" index.html || echo "Warning: Config not found in HTML"
+          grep -A2 "Supabase Config" index.html || echo "Warning: Config not found in HTML"
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
