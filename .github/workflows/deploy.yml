@@ -35,13 +35,13 @@ jobs:
           fi
           echo "Secrets are configured correctly"
           echo "Generating supabase-config.js..."
-          cat > supabase-config.js << 'EOF'
+          cat > supabase-config.js << EOF
           // Supabase配置文件
           // 此文件由 GitHub Actions 自动生成
           // 生成时间: $(date '+%Y-%m-%d %H:%M:%S')
           
-          const SUPABASE_URL = '${{ secrets.SUPABASE_URL }}';
-          const SUPABASE_ANON_KEY = '${{ secrets.SUPABASE_ANON_KEY }}';
+          const SUPABASE_URL = '$SUPABASE_URL';
+          const SUPABASE_ANON_KEY = '$SUPABASE_ANON_KEY';
           
           const isConfigured = SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && 
                               SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE' &&
@@ -291,6 +291,15 @@ jobs:
           fi
           echo "✓ supabase-config.js created successfully"
           echo "File size: $(wc -c < supabase-config.js) bytes"
+          echo "First 10 lines:"
+          head -n 10 supabase-config.js
+          echo "Checking if URLs are properly substituted..."
+          if grep -q 'SUPABASE_URL' supabase-config.js && ! grep -q '\${{' supabase-config.js; then
+            echo "✓ Environment variables properly substituted"
+          else
+            echo "✗ Warning: Variables may not be properly substituted"
+            grep 'SUPABASE_URL\|SUPABASE_ANON_KEY' supabase-config.js | head -n 5
+          fi
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
